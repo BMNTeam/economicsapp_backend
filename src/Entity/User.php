@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -14,16 +15,19 @@ class User implements UserInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Groups({"public"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Groups({"public"})
      */
     private $email;
 
     /**
      * @ORM\Column(type="json")
+     * @Groups({"public"})
      */
     private $roles = [];
 
