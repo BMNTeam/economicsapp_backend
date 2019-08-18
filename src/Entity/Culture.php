@@ -29,14 +29,9 @@ class Culture
      */
     private $culture_type;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\StatInfo", mappedBy="culture")
-     */
-    private $statInfos;
 
     public function __construct()
     {
-        $this->statInfos = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -64,37 +59,6 @@ class Culture
     public function setCultureType(?CultureType $culture_type): self
     {
         $this->culture_type = $culture_type;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|StatInfo[]
-     */
-    public function getStatInfos(): Collection
-    {
-        return $this->statInfos;
-    }
-
-    public function addStatInfo(StatInfo $statInfo): self
-    {
-        if (!$this->statInfos->contains($statInfo)) {
-            $this->statInfos[] = $statInfo;
-            $statInfo->setCulture($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStatInfo(StatInfo $statInfo): self
-    {
-        if ($this->statInfos->contains($statInfo)) {
-            $this->statInfos->removeElement($statInfo);
-            // set the owning side to null (unless already changed)
-            if ($statInfo->getCulture() === $this) {
-                $statInfo->setCulture(null);
-            }
-        }
 
         return $this;
     }

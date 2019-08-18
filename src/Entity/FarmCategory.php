@@ -23,14 +23,8 @@ class FarmCategory
      */
     private $name;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\StatInfo", mappedBy="farm_category")
-     */
-    private $statInfos;
-
     public function __construct()
     {
-        $this->statInfos = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -46,37 +40,6 @@ class FarmCategory
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|StatInfo[]
-     */
-    public function getStatInfos(): Collection
-    {
-        return $this->statInfos;
-    }
-
-    public function addStatInfo(StatInfo $statInfo): self
-    {
-        if (!$this->statInfos->contains($statInfo)) {
-            $this->statInfos[] = $statInfo;
-            $statInfo->setFarmCategory($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStatInfo(StatInfo $statInfo): self
-    {
-        if ($this->statInfos->contains($statInfo)) {
-            $this->statInfos->removeElement($statInfo);
-            // set the owning side to null (unless already changed)
-            if ($statInfo->getFarmCategory() === $this) {
-                $statInfo->setFarmCategory(null);
-            }
-        }
 
         return $this;
     }
