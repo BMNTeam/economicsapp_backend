@@ -1,5 +1,7 @@
 # Read the documentation: https://symfony.com/doc/master/bundles/FOSRestBundle/index.html
 fos_rest:
+  body_converter:
+    enabled: true
   format_listener:
     rules:
       - { path: ^/, fallback_format: json, priorities: [ json ] }
