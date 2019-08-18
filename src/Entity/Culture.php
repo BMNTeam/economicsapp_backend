@@ -25,7 +25,7 @@ class Culture
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\CultureType", inversedBy="cultures")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=true)
      */
     private $culture_type;
 
