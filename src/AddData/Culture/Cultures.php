@@ -42,11 +42,11 @@ class Cultures {
         return array_map(function (CultureWithData $cultureWithData) {
             if(!$this->statInfo) {return $cultureWithData; };
             $statInfo = array_filter($this->statInfo, function (StatInfo $statInfo) use ($cultureWithData) {
-                return $statInfo->getId() === $cultureWithData->getId();
+                return $statInfo->getCulture()->getId() === $cultureWithData->id;
             });
 
             if(!$statInfo) { return $cultureWithData; }
-            $cultureWithData->value = $statInfo && $statInfo[0]->getValue();
+            $cultureWithData->value = array_slice($statInfo, 0, 1)[0]->getValue();
             return $cultureWithData;
         },$cultureWithEmptyData);
     }
