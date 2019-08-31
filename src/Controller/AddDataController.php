@@ -113,6 +113,7 @@ class AddDataController extends AbstractFOSRestController {
                 $instance = $this->statInfoRepository->findOneBy([
                     "year" => $cultures_data->yearId,
                     "municipalities" => $data->municipality_id,
+                    "stat_type" => $data->municipality_id,
                     "culture" => $culture->id
                 ]);
                 if($instance) {
