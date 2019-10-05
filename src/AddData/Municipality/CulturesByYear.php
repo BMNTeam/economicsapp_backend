@@ -1,5 +1,5 @@
 <?php
-namespace App\AddData\Culture;
+namespace App\AddData\Municipality;
 
 use App\Entity\Culture;
 
