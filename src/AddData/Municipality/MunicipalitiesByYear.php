@@ -3,9 +3,9 @@ namespace App\AddData\Municipality;
 
 use App\Entity\Culture;
 
-class CulturesByYear {
+class MunicipalitiesByYear {
     public $yearId;
 
-    public $cultures;
+    public $municipalities;
 
 }

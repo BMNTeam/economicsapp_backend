@@ -5,12 +5,11 @@ namespace App\AddData\Municipality;
 use App\Entity\Culture;
 use Symfony\Component\HttpFoundation\Request;
 
-class AddCultureRequest {
+class AddMunicipalityRequest {
 
-    public $municipality_id;
-
+    public $culture_id;
     public $statTypeId;
-
+    public $farm_category_id;
     public $data;
 
     /**
@@ -28,8 +27,9 @@ class AddCultureRequest {
     public function __construct(Request $request)
     {
         $data= json_decode($request->getContent())->data;
-        $this->municipality_id = $data->municipalityId;
-        $this->statTypeId =  $data->statTypeId;
+        $this->culture_id = $data->cultureId;
+        $this->statTypeId = $data->statTypeId;
+        $this->farm_category_id = $data->farmCategoryId;
         $this->data =  $data->data;
     }
 }
