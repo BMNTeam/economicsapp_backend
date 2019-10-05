@@ -88,7 +88,7 @@ class AddDataController extends AbstractFOSRestController {
             return $this->view(null,  Response::HTTP_BAD_REQUEST);
         }
 
-        $statInfo = $this->getStatInfoData($farm_category_id, $year_id, $stat_type);
+        $statInfo = $this->getStatInfoData($farm_category_id, $year_id, $stat_type, $culture_id);
         $municipalities = $this->municipalityRepository->findAll();
 
         $municipalities = new Municipalities($municipalities, $statInfo);
@@ -156,9 +156,9 @@ class AddDataController extends AbstractFOSRestController {
         return $statInfo;
     }
 
-    private function getStatInfoData(int $farm_category_id, int $year_id, int $stat_type)
+    private function getStatInfoData(int $farm_category_id, int $year_id, int $stat_type, int $culture_id)
     {
-        $criteria = ['farm_category' => $farm_category_id, 'year' => $year_id, 'stat_type' => $stat_type];
+        $criteria = ['farm_category' => $farm_category_id, 'year' => $year_id, 'stat_type' => $stat_type, 'culture' => $culture_id];
         return $this->statInfoRepository->findBy($criteria);
     }
 }
