@@ -6,6 +6,7 @@ use App\AddData\Statistics\ShortStatistics;
 use App\AddData\Statistics\ShortStatisticsResult;
 use App\AddData\Statistics\StatisticsResult;
 use App\Entity\StatInfo;
+use App\Repository\CultureRepository;
 use App\Repository\StatInfoRepository;
 use App\Repository\StatTypeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -15,19 +16,22 @@ use FOS\RestBundle\Controller\AbstractFOSRestController;
 use App\Repository\YearRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class HomeController extends AbstractFOSRestController
 {
+    private $cultureRepository;
     private $statInfoRepository;
     private $entityManager;
     private $yearRepository;
     private $statTypeRepository;
 
 
-    public function __construct(StatInfoRepository $statInfoRepository, EntityManagerInterface $entityManager, YearRepository $yearRepository, StatTypeRepository $statTypeRepository)
+    public function __construct(StatInfoRepository $statInfoRepository, EntityManagerInterface $entityManager, YearRepository $yearRepository, StatTypeRepository $statTypeRepository, CultureRepository $cultureRepository)
     {
+        $this->cultureRepository = $cultureRepository;
         $this->statInfoRepository = $statInfoRepository;
         $this->entityManager = $entityManager;
         $this->yearRepository = $yearRepository;
@@ -36,11 +40,18 @@ class HomeController extends AbstractFOSRestController
 
     /**
      * @Route("/statistics", methods="GET")
+     * @param Request $request
+     * @return \FOS\RestBundle\View\View
      */
-    public function getStatistics()
+    public function getStatistics(Request $request)
     {
+        $year = $this->yearRepository->find($request->query->get("yearId"));
+        $culture = $this->cultureRepository->find($request->query->get("cultureId"));
+
         $criteria = new Criteria();
         $criteria->where($criteria->expr()->gt("value", 0));
+        $criteria->andWhere($criteria->expr()->eq("year", $year));
+        $criteria->andWhere($criteria->expr()->eq("culture", $culture));
 
         /* @var $results StatInfo[] */
         $results = $this->statInfoRepository->matching($criteria);
