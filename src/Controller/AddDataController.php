@@ -65,8 +65,9 @@ class AddDataController extends AbstractFOSRestController {
        $farmCategories = $this->farmCategoryRepository->findAll();
        $statTypes = $this->statTypeRepository->findAll();
        $cultures = $this->cultureRepository->findAll();
+       $municipalities = $this->municipalityRepository->findAll();
 
-       $resp = new OptionsResponse($years, $cultures, $farmCategories, $statTypes);
+       $resp = new OptionsResponse($years, $cultures, $farmCategories, $statTypes, $municipalities);
 
        return $this->view($resp, Response::HTTP_CREATED);
     }
@@ -168,6 +169,7 @@ class OptionsResponse {
     public $years;
     public $farmCategories;
     public $statTypes;
+    public $regions;
 
     /**
      * OptionsResponse constructor.
@@ -175,13 +177,15 @@ class OptionsResponse {
      * @param $cultures
      * @param $farmCategories
      * @param $statTypes
+     * @param $regions
      */
-    public function __construct($years, $cultures,  $farmCategories, $statTypes)
+    public function __construct($years, $cultures,  $farmCategories, $statTypes, $regions)
     {
         $this->years = $years;
         $this->cultures = $cultures;
         $this->farmCategories = $farmCategories;
         $this->statTypes = $statTypes;
+        $this->regions = $regions;
     }
 }
 
