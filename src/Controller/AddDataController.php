@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\AddData\Municipality\AddCultureRequest;
@@ -26,7 +27,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
-class AddDataController extends AbstractFOSRestController {
+class AddDataController extends AbstractFOSRestController
+{
     private $cultureRepository;
     private $cultureTypeRepository;
     private $yearRepository;
@@ -61,15 +63,15 @@ class AddDataController extends AbstractFOSRestController {
      */
     public function getAllOptions()
     {
-       $years = $this->yearRepository->findAll();
-       $farmCategories = $this->farmCategoryRepository->findAll();
-       $statTypes = $this->statTypeRepository->findAll();
-       $cultures = $this->cultureRepository->findAll();
-       $municipalities = $this->municipalityRepository->findAll();
+        $years = $this->yearRepository->findAll();
+        $farmCategories = $this->farmCategoryRepository->findAll();
+        $statTypes = $this->statTypeRepository->findAll();
+        $cultures = $this->cultureRepository->findAll();
+        $municipalities = $this->municipalityRepository->findAll();
 
-       $resp = new OptionsResponse($years, $cultures, $farmCategories, $statTypes, $municipalities);
+        $resp = new OptionsResponse($years, $cultures, $farmCategories, $statTypes, $municipalities);
 
-       return $this->view($resp, Response::HTTP_CREATED);
+        return $this->view($resp, Response::HTTP_CREATED);
     }
 
 
@@ -78,15 +80,14 @@ class AddDataController extends AbstractFOSRestController {
      * @param Request $request
      * @return \FOS\RestBundle\View\View
      */
-    public function getMunicipalitiesWithData( Request $request)
+    public function getMunicipalitiesWithData(Request $request)
     {
         $culture_id = $request->query->get("cultureId");
         $year_id = $request->query->get("yearId");
         $stat_type = $request->query->get('statType');
         $farm_category_id = $request->query->get("farmCategory");
-        if(!$culture_id || !$year_id || !$stat_type || !$farm_category_id)
-        {
-            return $this->view(null,  Response::HTTP_BAD_REQUEST);
+        if (!$culture_id || !$year_id || !$stat_type || !$farm_category_id) {
+            return $this->view(null, Response::HTTP_BAD_REQUEST);
         }
 
         $statInfo = $this->getStatInfoData($farm_category_id, $year_id, $stat_type, $culture_id);
@@ -113,29 +114,83 @@ class AddDataController extends AbstractFOSRestController {
         $data = new AddMunicipalityRequest($request);
         /* @var $municipalities_data MunicipalitiesByYear */
         foreach ($data->data as $municipalities_data) {
-            foreach ($municipalities_data->municipalities as $municipality){
-                $instance = $this->statInfoRepository->findOneBy([
+            foreach ($municipalities_data->municipalities as $municipality) {
+                $manager = $this->getDoctrine()->getManager();
+                $instance = $manager->getRepository(StatInfo::class)->findOneBy([
                     "year" => $municipalities_data->yearId,
                     "culture" => $data->culture_id,
                     "farm_category" => $data->farm_category_id,
                     "stat_type" => $data->statTypeId,
                     "municipalities" => $municipality->id
                 ]);
-                if($instance) {
+                if ($instance) {
                     $value = isset($municipality->value) ? $municipality->value : null;
                     $instance->setValue($value);
-                    $this->entityManager->flush();
+                    $manager->flush();
+                    // $this->trySetProductivity($instance, $data);
                     continue;
                 }
                 $statInfo = $this->createInfoIfNotExist($municipality, $data, $municipalities_data);
+                $manager->persist($statInfo);
+                $manager->flush();
+                $this->trySetProductivity($statInfo, $data);
 
-                $this->entityManager->persist($statInfo);
-                $this->entityManager->flush();
             }
         }
         return $this->view(Response::HTTP_OK);
     }
 
+    private function trySetProductivity(StatInfo $statInfo, $data)
+    {
+        $statType = $statInfo->getStatType();
+        $manager = $this->getDoctrine()->getManager();
+
+        $oppositeStatTypeId = $statType->getId() === 1 ? 2 : 1;
+        $oppositeStatInfo = $manager->getRepository(StatInfo::class)->findOneBy([
+            'year' => $statInfo->getYear(),
+            "culture" => $statInfo->getCulture(),
+            "farm_category" => $statInfo->getFarmCategory(),
+            "stat_type" => $this->statTypeRepository->find($oppositeStatTypeId),
+            "municipalities" => $statInfo->getMunicipalities()
+        ]);
+
+        if(!($oppositeStatInfo && $oppositeStatInfo->getValue())) return;
+        $value = $oppositeStatInfo->getId() === 1
+            ? $oppositeStatInfo->getValue()/ $statInfo->getValue()
+            : $statInfo->getValue() / $oppositeStatInfo->getValue();
+
+        $statInfo = $manager->getRepository(StatInfo::class)->find($statInfo->getId());
+        $productivityInfo = $this->getProductivityOrCreateIfNotExists($statInfo, $data);
+        $productivityInfo->setValue($value);
+        $manager->persist($productivityInfo);
+        $manager->flush();
+        return $manager;
+
+    }
+    private function getProductivityOrCreateIfNotExists(StatInfo $statInfo, $data)
+    {
+        $productivityInfo = $this->statInfoRepository->findOneBy([
+            'year' => $statInfo->getYear(),
+            "culture" => $statInfo->getCulture(),
+            "farm_category" => $statInfo->getFarmCategory(),
+            "stat_type" => $this->statTypeRepository->find(3),
+            "municipalities" => $statInfo->getMunicipalities()
+        ]);
+        $data->statTypeId = 3;
+        $municipality = (object)['id' => $statInfo->getMunicipalities()->getId()];
+        $year = (object)['yearId' => $statInfo->getYear()->getId()];
+        if(!$productivityInfo) {
+            return $this->createInfoIfNotExist($municipality, $data, $year);
+        }
+        return $productivityInfo;
+    }
+
+    /**
+     * @param $municipality
+     * @param $data
+     * @param $cultures_data
+     * @return StatInfo
+     */
     private function createInfoIfNotExist($municipality, $data, $cultures_data)
     {
         $statInfo = new StatInfo();
@@ -145,8 +200,7 @@ class AddDataController extends AbstractFOSRestController {
         $yearObj = $this->yearRepository->find($cultures_data->yearId);
         $farmCategoryObj = $this->farmCategoryRepository->find($data->farm_category_id);
 
-        if(isset($municipality->value) )
-        {
+        if (isset($municipality->value)) {
             $statInfo->setValue($municipality->value);
         }
         $statInfo->setCulture($cultureObj);
@@ -164,7 +218,8 @@ class AddDataController extends AbstractFOSRestController {
     }
 }
 
-class OptionsResponse {
+class OptionsResponse
+{
     public $cultures;
     public $years;
     public $farmCategories;
@@ -179,7 +234,7 @@ class OptionsResponse {
      * @param $statTypes
      * @param $regions
      */
-    public function __construct($years, $cultures,  $farmCategories, $statTypes, $regions)
+    public function __construct($years, $cultures, $farmCategories, $statTypes, $regions)
     {
         $this->years = $years;
         $this->cultures = $cultures;
