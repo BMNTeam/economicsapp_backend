@@ -1,20 +1,24 @@
 <?php
 namespace App\AddData\Statistics;
 
+use App\Entity\Municipality;
 use App\Entity\StatInfo;
 use App\Entity\StatType;
 use App\Repository\StatTypeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Criteria;
 
 class ShortStatistics {
     private $data_collection;
     private $count;
+    private $municipality;
     private $statTypeRepository;
 
-    public function __construct(StatTypeRepository $statTypeRepository, ArrayCollection $data_collection, int $count)
+    public function __construct(StatTypeRepository $statTypeRepository, ArrayCollection $data_collection, Municipality $municipality,  int $count)
     {
         $this->data_collection = $data_collection;
         $this->statTypeRepository = $statTypeRepository;
+        $this->municipality = $municipality;
         $this->count = $count;
     }
 
@@ -25,18 +29,17 @@ class ShortStatistics {
     {
         $gross_fee_type = $this->statTypeRepository->find(1);
         $cultivation_area_type = $this->statTypeRepository->find(2);
+        $productivity_type = $this->statTypeRepository->find(3);
         /** @var $data StatInfo[] */
-        $data = $this->data_collection->toArray();
+        $municipality_criteria = new Criteria();
+        $municipality_criteria->where($municipality_criteria->expr()->eq("municipalities", $this->municipality));
+        $data = $this->data_collection->matching($municipality_criteria)->toArray();
 
-        $gross_fee_data = $this->filterByType($data, $gross_fee_type->getId());
-        $gross_fee_sum = $this->getSum($gross_fee_data);
+        $gross_fee_data = $this->getSum($this->filterByType($data, $gross_fee_type->getId()));
+        $cultivation_area_data = $this->getSum($this->filterByType($data, $cultivation_area_type->getId()));
+        $productivity_data = $this->getSum($this->filterByType($data, $productivity_type->getId()));
 
-        $cultivation_area_data = $this->filterByType($data, $cultivation_area_type->getId());
-        $cultivation_area_sum = $this->getSum($cultivation_area_data);
-
-        $productivity_sum = $gross_fee_sum / $cultivation_area_sum;
-
-        return new ShortStatisticsResult($gross_fee_sum, $cultivation_area_sum, $productivity_sum, $this->count);
+        return new ShortStatisticsResult($gross_fee_data, $cultivation_area_data, $productivity_data, $this->count);
     }
 
     /**

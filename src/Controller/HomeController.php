@@ -5,6 +5,7 @@ use App\AddData\Statistics\LastDataResult;
 use App\AddData\Statistics\ShortStatistics;
 use App\AddData\Statistics\ShortStatisticsResult;
 use App\AddData\Statistics\StatisticsResult;
+use App\Entity\Municipality;
 use App\Entity\StatInfo;
 use App\Repository\CultureRepository;
 use App\Repository\StatInfoRepository;
@@ -47,6 +48,7 @@ class HomeController extends AbstractFOSRestController
     {
         $year = $this->yearRepository->find($request->query->get("yearId"));
         $culture = $this->cultureRepository->find($request->query->get("cultureId"));
+        $municipality = $this->getDoctrine()->getRepository(Municipality::class)->find(27, 0);
 
         $criteria = new Criteria();
         $criteria->where($criteria->expr()->gt("value", 0));
@@ -55,19 +57,20 @@ class HomeController extends AbstractFOSRestController
 
         /* @var $results StatInfo[] */
         $results = $this->statInfoRepository->matching($criteria);
-        $resp = $this->getShortStatistics($results);
+        $resp = $this->getShortStatistics($results, $municipality);
 
         return $this->view($resp, Response::HTTP_CREATED);
     }
 
     /**
      * @param LazyCriteriaCollection $collection
+     * @param Municipality $municipality
      * @return StatInfo[]
      */
-    private function getShortStatistics(LazyCriteriaCollection $collection)
+    private function getShortStatistics(LazyCriteriaCollection $collection, Municipality $municipality)
     {
         $last_year_data = $this->getLastYearData($collection);
-        $test = $this->transformToStatisticsData($last_year_data, $collection->count());
+        $test = $this->transformToStatisticsData($last_year_data, $municipality, $collection->count());
         return $test;
 
     }
@@ -81,9 +84,10 @@ class HomeController extends AbstractFOSRestController
         return $collection->matching($criteria);
     }
 
-    private function transformToStatisticsData(ArrayCollection $data_collection, int $count)
+    private function transformToStatisticsData(ArrayCollection $data_collection, Municipality $municipality, int $count)
     {
-        $short_statistics = new ShortStatistics($this->statTypeRepository, $data_collection, $count);
+
+        $short_statistics = new ShortStatistics($this->statTypeRepository, $data_collection, $municipality, $count);
         $short_description = $short_statistics->get();
 
         $last_data = $this->getLastData($data_collection);
