@@ -30,9 +30,13 @@ class Municipalities {
 
     private function getMunicipalitiesWithEmptyData()
     {
-        return array_map(function (Municipality $municipality){
+        $municipalities_with_empty_data = array_map(function (Municipality $municipality){
             return new MunicipalityWithData($municipality->getId(), $municipality->getName(), null);
         },$this->municipalities);
+        $municipalities_with_empty_data_without_region = array_filter($municipalities_with_empty_data, function (MunicipalityWithData $municipalityWithData) {
+            return $municipalityWithData->id !== 27;
+        });
+        return $municipalities_with_empty_data_without_region;
     }
 
     private function getMunicipalitiesWithFilledData(array $municipalityWithEmptyData)

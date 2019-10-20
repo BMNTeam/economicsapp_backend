@@ -127,62 +127,25 @@ class AddDataController extends AbstractFOSRestController
                     $value = isset($municipality->value) ? $municipality->value : null;
                     $instance->setValue($value);
                     $manager->flush();
-                    // $this->trySetProductivity($instance, $data);
                     continue;
                 }
                 $statInfo = $this->createInfoIfNotExist($municipality, $data, $municipalities_data);
                 $manager->persist($statInfo);
                 $manager->flush();
-                $this->trySetProductivity($statInfo, $data);
-
             }
         }
-        return $this->view(Response::HTTP_OK);
+
+        $test = $this->setProductivityAndRegionData($data);
+
+        return $this->view($test, Response::HTTP_OK);
     }
 
-    private function trySetProductivity(StatInfo $statInfo, $data)
+    private function setProductivityAndRegionData(AddMunicipalityRequest $data)
     {
-        $statType = $statInfo->getStatType();
-        $manager = $this->getDoctrine()->getManager();
 
-        $oppositeStatTypeId = $statType->getId() === 1 ? 2 : 1;
-        $oppositeStatInfo = $manager->getRepository(StatInfo::class)->findOneBy([
-            'year' => $statInfo->getYear(),
-            "culture" => $statInfo->getCulture(),
-            "farm_category" => $statInfo->getFarmCategory(),
-            "stat_type" => $this->statTypeRepository->find($oppositeStatTypeId),
-            "municipalities" => $statInfo->getMunicipalities()
-        ]);
-
-        if(!($oppositeStatInfo && $oppositeStatInfo->getValue())) return;
-        $value = $oppositeStatInfo->getId() === 1
-            ? $oppositeStatInfo->getValue()/ $statInfo->getValue()
-            : $statInfo->getValue() / $oppositeStatInfo->getValue();
-
-        $statInfo = $manager->getRepository(StatInfo::class)->find($statInfo->getId());
-        $productivityInfo = $this->getProductivityOrCreateIfNotExists($statInfo, $data);
-        $productivityInfo->setValue($value);
-        $manager->persist($productivityInfo);
-        $manager->flush();
-        return $manager;
-
-    }
-    private function getProductivityOrCreateIfNotExists(StatInfo $statInfo, $data)
-    {
-        $productivityInfo = $this->statInfoRepository->findOneBy([
-            'year' => $statInfo->getYear(),
-            "culture" => $statInfo->getCulture(),
-            "farm_category" => $statInfo->getFarmCategory(),
-            "stat_type" => $this->statTypeRepository->find(3),
-            "municipalities" => $statInfo->getMunicipalities()
-        ]);
-        $data->statTypeId = 3;
-        $municipality = (object)['id' => $statInfo->getMunicipalities()->getId()];
-        $year = (object)['yearId' => $statInfo->getYear()->getId()];
-        if(!$productivityInfo) {
-            return $this->createInfoIfNotExist($municipality, $data, $year);
-        }
-        return $productivityInfo;
+        return $this->getDoctrine()
+            ->getRepository(StatInfo::class)
+            ->setUpProductivityAndRegionData($data);
     }
 
     /**
