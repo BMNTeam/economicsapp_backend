@@ -46,7 +46,7 @@ class AnalyzeDataController extends AbstractFOSRestController
      */
     public function getGraphData(Request $request)
     {
-        $analyze = new AnalyzeDataRequest($request, $this->statInfoRepository, $this->cultureRepository, $this->municipalityRepository, $this->statTypeRepository, $this->farmCategoryRepository);
-        return $this->view($analyze->getChartData()->toArray(), Response::HTTP_CREATED);
+        $analyze = new AnalyzeDataRequest($request, $this->statInfoRepository, $this->cultureRepository, $this->municipalityRepository, $this->statTypeRepository, $this->farmCategoryRepository, $this->yearRepository);
+        return $this->view($analyze->getChartData(), Response::HTTP_OK);
     }
 }

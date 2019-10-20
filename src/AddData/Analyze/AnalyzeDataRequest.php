@@ -7,6 +7,7 @@ use App\Repository\FarmCategoryRepository;
 use App\Repository\MunicipalityRepository;
 use App\Repository\StatInfoRepository;
 use App\Repository\StatTypeRepository;
+use App\Repository\YearRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\LazyCriteriaCollection;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,6 +18,7 @@ class AnalyzeDataRequest {
     public $stat_type;
     public $farm_category;
     private $statInfoRepository;
+    private $years;
 
     /**
      * AnalyzeDataRequest constructor.
@@ -27,12 +29,13 @@ class AnalyzeDataRequest {
      * @param StatTypeRepository $statTypeRepository
      * @param FarmCategoryRepository $farmCategoryRepository
      */
-    public function __construct(Request $request, StatInfoRepository $statInfoRepository, CultureRepository $cultureRepository, MunicipalityRepository $municipalityRepository, StatTypeRepository $statTypeRepository, FarmCategoryRepository $farmCategoryRepository)
+    public function __construct(Request $request, StatInfoRepository $statInfoRepository, CultureRepository $cultureRepository, MunicipalityRepository $municipalityRepository, StatTypeRepository $statTypeRepository, FarmCategoryRepository $farmCategoryRepository, YearRepository $yearRepository)
     {
         $this->culture = $this->getCulture($cultureRepository, $request->query->get("cultureId"));
         $this->municipality = $this->getMunicipality($municipalityRepository, $request->query->get("municipalityId"));
         $this->stat_type = $this->getStatType($statTypeRepository, $request->query->get("statTypeId"));
         $this->farm_category = $this->getFarmCategory($farmCategoryRepository, $request->query->get("farmCategoryId"));
+        $this->years = $this->getAllYears($yearRepository);
         $this->statInfoRepository = $statInfoRepository;
     }
 
@@ -41,7 +44,8 @@ class AnalyzeDataRequest {
 
         /*** $data StatInfo[] */
         $data = $this->statInfoRepository->matching($this->getBasicCriteria())->toArray();
-        return $data;
+        $analyze = new Analyze($this->years, $data);
+        return $analyze->get();
     }
 
     /***
@@ -53,6 +57,8 @@ class AnalyzeDataRequest {
         $criteria->where($criteria->expr()->gt("value", 0));
         $criteria->andWhere($criteria->expr()->eq("culture", $this->culture));
         $criteria->andWhere($criteria->expr()->eq("farm_category", $this->farm_category));
+        $criteria->andWhere($criteria->expr()->eq("municipalities", $this->municipality));
+        $criteria->andWhere($criteria->expr()->eq("stat_type", $this->stat_type));
         return $criteria;
     }
 
@@ -63,24 +69,31 @@ class AnalyzeDataRequest {
 
     private function getMunicipality(MunicipalityRepository $municipalityRepository, int $id)
     {
-        if ($id === 9999) // hardcoded due to all municipalities in UI
-        {
-            return $municipalityRepository->findAll();
-        }
         return $municipalityRepository->find($id);
     }
 
     private function  getStatType(StatTypeRepository $statTypeRepository, int $id)
     {
-        if($id === 9999) // hardcoded due to all municipalities in UI
-        {
-            return $statTypeRepository->findAll();
-        }
         return $statTypeRepository->find($id);
     }
 
     private function getFarmCategory(FarmCategoryRepository $farmCategoryRepository, int $id)
     {
         return $farmCategoryRepository->find($id);
+    }
+
+    /**
+     * @param YearRepository $yearRepository
+     * @param int optional $yearStart
+     * @return \App\Entity\Year[]
+     */
+    private function getAllYears(YearRepository $yearRepository, ?int $yearStart = null)
+    {
+        if($yearStart) {
+            $criteria = new Criteria();
+            $criteria->where($criteria->expr()->gt("year", $yearStart));
+            return $yearRepository->matching($criteria)->toArray();
+        }
+        return $yearRepository->findAll();
     }
 }
