@@ -109,7 +109,7 @@ class StatInfoRepository extends ServiceEntityRepository
             if ($gross_elem->getValue() === null || $cultivation_area_elem->getValue() === null) {
                 return $stat;
             }
-            $stat->setValue($gross_elem->getValue() / $cultivation_area_elem->getValue());
+            $stat->setValue($gross_elem->getValue() * 10 / $cultivation_area_elem->getValue());
             return $stat;
         }, $productivities);
     }
