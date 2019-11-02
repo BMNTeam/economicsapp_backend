@@ -28,6 +28,7 @@ class AnalyzeDataRequest {
      * @param MunicipalityRepository $municipalityRepository
      * @param StatTypeRepository $statTypeRepository
      * @param FarmCategoryRepository $farmCategoryRepository
+     * @param YearRepository $yearRepository
      */
     public function __construct(Request $request, StatInfoRepository $statInfoRepository, CultureRepository $cultureRepository, MunicipalityRepository $municipalityRepository, StatTypeRepository $statTypeRepository, FarmCategoryRepository $farmCategoryRepository, YearRepository $yearRepository)
     {
@@ -35,7 +36,7 @@ class AnalyzeDataRequest {
         $this->municipality = $this->getMunicipality($municipalityRepository, $request->query->get("municipalityId"));
         $this->stat_type = $this->getStatType($statTypeRepository, $request->query->get("statTypeId"));
         $this->farm_category = $this->getFarmCategory($farmCategoryRepository, $request->query->get("farmCategoryId"));
-        $this->years = $this->getAllYears($yearRepository);
+        $this->years = $this->getAllYears($yearRepository, 1999);
         $this->statInfoRepository = $statInfoRepository;
     }
 
@@ -44,7 +45,7 @@ class AnalyzeDataRequest {
 
         /*** $data StatInfo[] */
         $data = $this->statInfoRepository->matching($this->getBasicCriteria())->toArray();
-        $analyze = new Analyze($this->years, $data);
+        $analyze = new Analyze($this->years, $data, $this->stat_type);
         return $analyze->get();
     }
 
@@ -91,7 +92,7 @@ class AnalyzeDataRequest {
     {
         if($yearStart) {
             $criteria = new Criteria();
-            $criteria->where($criteria->expr()->gt("year", $yearStart));
+            $criteria->where($criteria->expr()->gt("name", $yearStart));
             return $yearRepository->matching($criteria)->toArray();
         }
         return $yearRepository->findAll();
