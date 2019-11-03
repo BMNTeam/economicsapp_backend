@@ -184,9 +184,11 @@ class StatInfoRepository extends ServiceEntityRepository
             return;
         }
         /**
+         * When we count productivity we must write average value instead of sum
          * @var StatInfo $instance
          */
-        $instance->setValue($sum);
+        $value = $stat_type_id === 3 ? $sum / 26 : $sum;
+        $instance->setValue($value);
         $entityManager->flush();
     }
 
