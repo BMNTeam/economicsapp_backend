@@ -3,14 +3,12 @@ namespace App\Controller;
 
 use App\AddData\Statistics\LastDataResult;
 use App\AddData\Statistics\ShortStatistics;
-use App\AddData\Statistics\ShortStatisticsResult;
 use App\AddData\Statistics\StatisticsResult;
 use App\Entity\Municipality;
 use App\Entity\StatInfo;
 use App\Repository\CultureRepository;
 use App\Repository\StatInfoRepository;
 use App\Repository\StatTypeRepository;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\LazyCriteriaCollection;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
@@ -69,22 +67,12 @@ class HomeController extends AbstractFOSRestController
      */
     private function getShortStatistics(LazyCriteriaCollection $collection, Municipality $municipality)
     {
-        $last_year_data = $this->getLastYearData($collection);
-        $test = $this->transformToStatisticsData($last_year_data, $municipality, $collection->count());
+        $test = $this->transformToStatisticsData($collection, $municipality, $collection->count());
         return $test;
 
     }
 
-    private function getLastYearData(LazyCriteriaCollection $collection)
-    {
-        $last_year = $this->yearRepository->findBy([], ["name" => "DESC"], 1)[0];
-        $criteria = new Criteria();
-        $criteria->where($criteria->expr()->eq("year", $last_year));
-
-        return $collection->matching($criteria);
-    }
-
-    private function transformToStatisticsData(ArrayCollection $data_collection, Municipality $municipality, int $count)
+    private function transformToStatisticsData(LazyCriteriaCollection $data_collection, Municipality $municipality, int $count)
     {
 
         $short_statistics = new ShortStatistics($this->statTypeRepository, $data_collection, $municipality, $count);
@@ -94,7 +82,7 @@ class HomeController extends AbstractFOSRestController
         return new StatisticsResult($short_description, $last_data);
     }
 
-    private function getLastData(ArrayCollection $data_collection)
+    private function getLastData(LazyCriteriaCollection $data_collection)
     {
         /** @var StatInfo[] $data */
        $items = array_slice($data_collection->toArray(), 0, 5);

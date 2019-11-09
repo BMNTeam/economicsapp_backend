@@ -3,10 +3,9 @@ namespace App\AddData\Statistics;
 
 use App\Entity\Municipality;
 use App\Entity\StatInfo;
-use App\Entity\StatType;
 use App\Repository\StatTypeRepository;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\LazyCriteriaCollection;
 
 class ShortStatistics {
     private $data_collection;
@@ -14,7 +13,7 @@ class ShortStatistics {
     private $municipality;
     private $statTypeRepository;
 
-    public function __construct(StatTypeRepository $statTypeRepository, ArrayCollection $data_collection, Municipality $municipality,  int $count)
+    public function __construct(StatTypeRepository $statTypeRepository, LazyCriteriaCollection $data_collection, Municipality $municipality,  int $count)
     {
         $this->data_collection = $data_collection;
         $this->statTypeRepository = $statTypeRepository;
